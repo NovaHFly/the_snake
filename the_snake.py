@@ -1,4 +1,4 @@
-from random import randint
+from random import choice, randint
 
 import pygame
 
@@ -124,17 +124,13 @@ class Snake(GameObject):
         self.direction = RIGHT
         self.next_direction = None
         self.positions = [GRID_CENTER]
-
-    @property
-    def length(self) -> int:
-        """Snake's length."""
-        return len(self.positions)
+        self.length = 1
 
     def get_head_position(self) -> tuple[int, int]:
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
 
-    def move(self, grow: bool = False):
+    def move(self):
         """Moves the snake's head in current direction.
 
         Inserts new head position in positions list.
@@ -154,7 +150,7 @@ class Snake(GameObject):
         self.positions.insert(0, new_position)
 
         # If snake's not growing, remove last position
-        if not grow:
+        if len(self.positions) == self.length:
             self.positions.pop()
 
     def update_direction(self):
@@ -175,7 +171,9 @@ class Snake(GameObject):
 
     def reset(self):
         """Resets snake on collision with self."""
-        self.positions = [self.get_head_position()]
+        self.positions = [GRID_CENTER]
+        self.length = 1
+        self.direction = choice((UP, DOWN, LEFT, RIGHT))
 
     def draw(self, surface):
         """Draw snake on the game screen."""
@@ -201,13 +199,15 @@ def main():
         # If snake eats an apple, allow it to grow by one
         snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
+            snake.length += 1
             apple.randomize_position(snake.positions)
 
         # If snake collides with its body, reset its length to 1
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
         if snake_collide_self:
             snake.reset()
-        snake.move(grow=snake_ate_apple)
+
+        snake.move()
 
         # Draw all game objects
         apple.draw(screen)
