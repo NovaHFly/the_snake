@@ -28,6 +28,7 @@ BORDER_COLOR = (93, 216, 228)
 APPLE_COLOR = (255, 0, 0)
 
 SNAKE_COLOR = (0, 255, 0)
+SNAKE_HEAD_COLOR = (255, 255, 0)
 
 # Game speed (in fps)
 SPEED = 10
@@ -120,11 +121,15 @@ class Snake(GameObject):
 
     def __init__(self):
         super().__init__()
+
         self.body_color = SNAKE_COLOR
+        self.head_color = SNAKE_HEAD_COLOR
+
         self.direction = RIGHT
         self.next_direction = None
-        self.positions = [GRID_CENTER]
+
         self.length = 1
+        self.positions = [GRID_CENTER]
 
     def get_head_position(self) -> tuple[int, int]:
         """Snake's head position (First square in snake positions)."""
@@ -150,7 +155,7 @@ class Snake(GameObject):
         self.positions.insert(0, new_position)
 
         # If snake's not growing, remove last position
-        if len(self.positions) == self.length:
+        if len(self.positions) > self.length:
             self.positions.pop()
 
     def update_direction(self):
@@ -177,7 +182,13 @@ class Snake(GameObject):
 
     def draw(self, surface):
         """Draw snake on the game screen."""
-        for position in self.screen_positions:
+        positions = self.screen_positions
+
+        rect = pygame.Rect(positions[0], CELL_SIZE)
+        pygame.draw.rect(surface, self.head_color, rect)
+        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+        for position in positions[1:]:
             rect = pygame.Rect(position, CELL_SIZE)
             pygame.draw.rect(surface, self.body_color, rect)
             pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
