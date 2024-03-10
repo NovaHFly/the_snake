@@ -11,6 +11,8 @@ GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
+CELL_SIZE = (GRID_SIZE, GRID_SIZE)
+
 # Направления движения:
 UP = (0, -1)
 DOWN = (0, 1)
@@ -94,9 +96,7 @@ class Apple(GameObject):
 
     def draw(self, surface):
         """Draws an apple on game screen."""
-        rect = pygame.Rect(
-            (self.position[0], self.position[1]), (GRID_SIZE, GRID_SIZE)
-        )
+        rect = pygame.Rect(self.position, CELL_SIZE)
         pygame.draw.rect(surface, self.body_color, rect)
         pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
@@ -150,25 +150,10 @@ class Snake(GameObject):
     # # Метод draw класса Snake
     def draw(self, surface):
         """Draw snake on the game screen."""
-        for position in self.positions[:-1]:
-            rect = pygame.Rect(
-                (position[0], position[1]), (GRID_SIZE, GRID_SIZE)
-            )
+        for position in self.positions:
+            rect = pygame.Rect(position, CELL_SIZE)
             pygame.draw.rect(surface, self.body_color, rect)
             pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
-
-        # Отрисовка головы змейки
-        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(surface, self.body_color, head_rect)
-        pygame.draw.rect(surface, BORDER_COLOR, head_rect, 1)
-
-        # Затирание последнего сегмента
-        # if self.last:
-        #     last_rect = pygame.Rect(
-        #         (self.last[0], self.last[1]), (GRID_SIZE, GRID_SIZE)
-        #     )
-        #     pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
-
 
 def main():
     """Game main loop."""
