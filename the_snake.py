@@ -70,10 +70,9 @@ def handle_keys(game_object):
 class GameObject:
     """Base game object."""
 
-    body_color: tuple[int, int, int]
-
     def __init__(self):
         self.position = GRID_CENTER
+        self.body_color = None
 
     def draw(self, surface: pygame.Surface):
         """Draw game object on the game screen."""
@@ -123,7 +122,11 @@ class Snake(GameObject):
         self.positions = [GRID_CENTER]
 
     @property
-    def head_position(self):
+    def length(self) -> int:
+        """Snake's length."""
+        return len(self.positions)
+
+    def get_head_position(self) -> tuple[int, int]:
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
 
@@ -133,7 +136,7 @@ class Snake(GameObject):
         Inserts new head position in positions list.
         If snake does not grow on this move, deletes last position.
         """
-        col, row = self.head_position
+        col, row = self.get_head_position()
         add_col, add_row = self.direction
 
         new_position = (
@@ -164,6 +167,10 @@ class Snake(GameObject):
             )
         )
 
+    def reset(self):
+        """Resets snake on collision with self."""
+        self.positions = [self.get_head_position()]
+
     # # Метод draw класса Snake
     def draw(self, surface):
         """Draw snake on the game screen."""
@@ -187,9 +194,12 @@ def main():
         # Clear screen
         screen.fill(BOARD_BACKGROUND_COLOR)
 
-        snake_ate_apple = snake.head_position == apple.position
+        snake_collide_self = snake.get_head_position() in snake.positions[1:]
+        snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
             apple.randomize_position()
+        if snake_collide_self:
+            snake.reset()
         snake.move(grow=snake_ate_apple)
 
         # Draw all game objects
