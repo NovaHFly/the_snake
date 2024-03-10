@@ -2,50 +2,46 @@ from random import randint
 
 import pygame
 
-# Инициализация PyGame:
 pygame.init()
 
-# Константы для размеров поля и сетки:
+# Screen aspect ratio
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
+
+# Grid constants
 GRID_SIZE = 20
+CELL_SIZE = (GRID_SIZE, GRID_SIZE)
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
-
 GRID_CENTER = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
-CELL_SIZE = (GRID_SIZE, GRID_SIZE)
 
-# Направления движения:
+# Move directions
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
-# Цвет фона - черный:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 
-# Цвет границы ячейки
+# Cell border color
 BORDER_COLOR = (93, 216, 228)
 
-# Цвет яблока
 APPLE_COLOR = (255, 0, 0)
 
-# Цвет змейки
 SNAKE_COLOR = (0, 255, 0)
 
-# Скорость движения змейки:
+# Game speed (in fps)
 SPEED = 10
 
-# Настройка игрового окна:
+# Game screen setting
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
-# Заголовок окна игрового поля:
+# Game window caption
 pygame.display.set_caption('Змейка')
 
-# Настройка времени:
+# Game clock
 clock = pygame.time.Clock()
 
 
-# Функция обработки действий пользователя
 def handle_keys(game_object):
     """Reads all events from game.
 
@@ -66,7 +62,6 @@ def handle_keys(game_object):
                 game_object.next_direction = RIGHT
 
 
-# Тут опишите все классы игры.
 class GameObject:
     """Base game object."""
 
@@ -148,6 +143,8 @@ class Snake(GameObject):
         col, row = self.get_head_position()
         add_col, add_row = self.direction
 
+        # Mod division is used to fix values which go
+        #  over limit of the grid
         new_position = (
             (col + add_col) % GRID_WIDTH,
             (row + add_row) % GRID_HEIGHT,
@@ -156,7 +153,7 @@ class Snake(GameObject):
         # Insert new position as snake's head
         self.positions.insert(0, new_position)
 
-        # If snake's not growing, delete last position
+        # If snake's not growing, remove last position
         if not grow:
             self.positions.pop()
 
@@ -180,7 +177,6 @@ class Snake(GameObject):
         """Resets snake on collision with self."""
         self.positions = [self.get_head_position()]
 
-    # # Метод draw класса Snake
     def draw(self, surface):
         """Draw snake on the game screen."""
         for position in self.screen_positions:
@@ -191,7 +187,6 @@ class Snake(GameObject):
 
 def main():
     """Game main loop."""
-    # Тут нужно создать экземпляры классов.
     snake = Snake()
     apple = Apple()
 
@@ -203,10 +198,12 @@ def main():
         # Clear screen
         screen.fill(BOARD_BACKGROUND_COLOR)
 
+        # If snake eats an apple, allow it to grow by one
         snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
             apple.randomize_position(snake.positions)
 
+        # If snake collides with its body, reset its length to 1
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
         if snake_collide_self:
             snake.reset()
