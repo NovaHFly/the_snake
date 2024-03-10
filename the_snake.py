@@ -1,4 +1,4 @@
-from random import choice, randint
+from random import randint
 
 import pygame
 
@@ -11,6 +11,7 @@ GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
+GRID_CENTER = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
 CELL_SIZE = (GRID_SIZE, GRID_SIZE)
 
 # Направления движения:
@@ -72,11 +73,17 @@ class GameObject:
     body_color: tuple[int, int, int]
 
     def __init__(self):
-        self.position = [SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2]
+        self.position = GRID_CENTER
 
     def draw(self, surface: pygame.Surface):
         """Draw game object on the game screen."""
         pass
+
+    @property
+    def screen_position(self) -> tuple[int, int]:
+        """Object's true position on screen."""
+        col, row = self.position
+        return (col * GRID_SIZE, row * GRID_SIZE)
 
 
 class Apple(GameObject):
@@ -90,13 +97,13 @@ class Apple(GameObject):
     def randomize_position(self):
         """Set apple position to a random cell inside the grid."""
         self.position = (
-            randint(0, GRID_WIDTH - 1) * GRID_SIZE,
-            randint(0, GRID_HEIGHT - 1) * GRID_SIZE,
+            randint(0, GRID_WIDTH - 1),
+            randint(0, GRID_HEIGHT - 1),
         )
 
     def draw(self, surface):
         """Draws an apple on game screen."""
-        rect = pygame.Rect(self.position, CELL_SIZE)
+        rect = pygame.Rect(self.screen_position, CELL_SIZE)
         pygame.draw.rect(surface, self.body_color, rect)
         pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
@@ -113,7 +120,7 @@ class Snake(GameObject):
         self.body_color = SNAKE_COLOR
         self.direction = RIGHT
         self.next_direction = None
-        self.positions = [(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)]
+        self.positions = [GRID_CENTER]
 
     @property
     def head_position(self):
@@ -127,11 +134,11 @@ class Snake(GameObject):
         If snake does not grow on this move, deletes last position.
         """
         col, row = self.head_position
-        add_col, add_row = map(lambda x: x * GRID_SIZE, self.direction)
+        add_col, add_row = self.direction
 
         new_position = (
-            (col + add_col) % SCREEN_WIDTH,
-            (row + add_row) % SCREEN_HEIGHT,
+            (col + add_col) % GRID_WIDTH,
+            (row + add_row) % GRID_HEIGHT,
         )
 
         # Insert new position as snake's head
@@ -147,13 +154,24 @@ class Snake(GameObject):
             self.direction = self.next_direction
             self.next_direction = None
 
+    @property
+    def screen_positions(self) -> list[tuple[int, int]]:
+        """Snake segments true position on screen."""
+        return list(
+            map(
+                lambda pos: (pos[0] * GRID_SIZE, pos[1] * GRID_SIZE),
+                self.positions,
+            )
+        )
+
     # # Метод draw класса Snake
     def draw(self, surface):
         """Draw snake on the game screen."""
-        for position in self.positions:
+        for position in self.screen_positions:
             rect = pygame.Rect(position, CELL_SIZE)
             pygame.draw.rect(surface, self.body_color, rect)
             pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
 
 def main():
     """Game main loop."""
