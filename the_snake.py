@@ -43,7 +43,82 @@ clock = pygame.time.Clock()
 
 
 # Тут опишите все классы игры.
-...
+class GameObject:
+    """Base game object."""
+
+    body_color: tuple[int, int, int]
+
+    def __init__(self):
+        self.position = GRID_CENTER_POSITION
+
+    def draw(self, surface: pygame.Surface):
+        """Draw game object on the game screen."""
+        pass
+
+    @property
+    def screen_position(self) -> tuple[int, int]:
+        """Game object's true position on screen.
+
+        Used in draw method.
+        """
+        return tuple(map(lambda x: x * GRID_SIZE, self.position))
+
+
+class Apple(GameObject):
+
+    def __init__(self):
+        super().__init__()
+
+    def randomize_position(self):
+        ...
+
+    def draw(self, surface):
+        rect = pygame.Rect(
+            (self.position[0], self.position[1]),
+            (GRID_SIZE, GRID_SIZE)
+        )
+        pygame.draw.rect(surface, self.body_color, rect)
+        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+
+class Snake(GameObject):
+
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def head_position(self):
+        ...
+
+    def move(self):
+        ...
+
+    def update_direction(self):
+        if self.next_direction:
+            self.direction = self.next_direction
+            self.next_direction = None
+
+    # # Метод draw класса Snake
+    def draw(self, surface):
+        for position in self.positions[:-1]:
+            rect = (
+                pygame.Rect((position[0], position[1]), (GRID_SIZE, GRID_SIZE))
+            )
+            pygame.draw.rect(surface, self.body_color, rect)
+            pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+        # Отрисовка головы змейки
+        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(surface, self.body_color, head_rect)
+        pygame.draw.rect(surface, BORDER_COLOR, head_rect, 1)
+
+        # Затирание последнего сегмента
+        if self.last:
+            last_rect = pygame.Rect(
+                (self.last[0], self.last[1]),
+                (GRID_SIZE, GRID_SIZE)
+            )
+            pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 
 def main():
@@ -53,44 +128,13 @@ def main():
     # while True:
     #     clock.tick(SPEED)
 
-        # Тут опишите основную логику игры.
-        # ...
+    # Тут опишите основную логику игры.
+    # ...
 
 
 if __name__ == '__main__':
     main()
 
-
-# Метод draw класса Apple
-# def draw(self, surface):
-#     rect = pygame.Rect(
-#         (self.position[0], self.position[1]),
-#         (GRID_SIZE, GRID_SIZE)
-#     )
-#     pygame.draw.rect(surface, self.body_color, rect)
-#     pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
-
-# # Метод draw класса Snake
-# def draw(self, surface):
-#     for position in self.positions[:-1]:
-#         rect = (
-#             pygame.Rect((position[0], position[1]), (GRID_SIZE, GRID_SIZE))
-#         )
-#         pygame.draw.rect(surface, self.body_color, rect)
-#         pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
-
-#     # Отрисовка головы змейки
-#     head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-#     pygame.draw.rect(surface, self.body_color, head_rect)
-#     pygame.draw.rect(surface, BORDER_COLOR, head_rect, 1)
-
-#     # Затирание последнего сегмента
-#     if self.last:
-#         last_rect = pygame.Rect(
-#             (self.last[0], self.last[1]),
-#             (GRID_SIZE, GRID_SIZE)
-#         )
-#         pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
 # Функция обработки действий пользователя
 # def handle_keys(game_object):
@@ -107,9 +151,3 @@ if __name__ == '__main__':
 #                 game_object.next_direction = LEFT
 #             elif event.key == pygame.K_RIGHT and game_object.direction != LEFT:
 #                 game_object.next_direction = RIGHT
-
-# Метод обновления направления после нажатия на кнопку
-# def update_direction(self):
-#     if self.next_direction:
-#         self.direction = self.next_direction
-#         self.next_direction = None
