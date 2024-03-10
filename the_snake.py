@@ -33,7 +33,7 @@ APPLE_COLOR = (255, 0, 0)
 SNAKE_COLOR = (0, 255, 0)
 
 # Скорость движения змейки:
-SPEED = 20
+SPEED = 10
 
 # Настройка игрового окна:
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
@@ -93,12 +93,21 @@ class Apple(GameObject):
         self.body_color = APPLE_COLOR
         self.randomize_position()
 
-    def randomize_position(self):
+    def randomize_position(
+        self, snake_positions: list[tuple[int, int]] = None
+    ):
         """Set apple position to a random cell inside the grid."""
-        self.position = (
-            randint(0, GRID_WIDTH - 1),
-            randint(0, GRID_HEIGHT - 1),
-        )
+        if snake_positions is None:
+            snake_positions = [GRID_CENTER]
+
+        while True:
+            self.position = (
+                randint(0, GRID_WIDTH - 1),
+                randint(0, GRID_HEIGHT - 1),
+            )
+            if self.position in snake_positions:
+                continue
+            break
 
     def draw(self, surface):
         """Draws an apple on game screen."""
@@ -194,10 +203,11 @@ def main():
         # Clear screen
         screen.fill(BOARD_BACKGROUND_COLOR)
 
-        snake_collide_self = snake.get_head_position() in snake.positions[1:]
         snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
-            apple.randomize_position()
+            apple.randomize_position(snake.positions)
+
+        snake_collide_self = snake.get_head_position() in snake.positions[1:]
         if snake_collide_self:
             snake.reset()
         snake.move(grow=snake_ate_apple)
