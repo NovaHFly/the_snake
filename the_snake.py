@@ -97,23 +97,33 @@ class Apple(GameObject):
 
     def __init__(self):
         super().__init__()
+
         self.body_color = APPLE_COLOR
+
+        # Randomize apple's starting position
         self.randomize_position()
 
     def randomize_position(
         self, snake_positions: list[tuple[int, int]] = None
     ):
         """Set apple position to a random cell inside the grid."""
+        # Snake positions are used as reference to where apple can't
+        #  be generated.
         if snake_positions is None:
             snake_positions = [GRID_CENTER]
 
+        # Generate new random coordinates until free cell is found.
         while True:
             self.position = (
                 randint(0, GRID_WIDTH - 1),
                 randint(0, GRID_HEIGHT - 1),
             )
+
+            # If generated position collides with snake positions
+            #  go to next iteration
             if self.position in snake_positions:
                 continue
+
             break
 
     def draw(self, surface: pygame.Surface):
@@ -138,6 +148,7 @@ class Snake(GameObject):
         self.next_direction = None
 
         self.length = 1
+        # Snake starts at the grid center
         self.positions = [GRID_CENTER]
 
     def get_head_position(self) -> tuple[int, int]:
@@ -168,7 +179,7 @@ class Snake(GameObject):
             self.positions.pop()
 
     def update_direction(self):
-        """Updates snake direction with a new value on direction key press."""
+        """Updates snake direction with a new value."""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
