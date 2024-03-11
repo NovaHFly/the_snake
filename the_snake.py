@@ -31,6 +31,7 @@ BOARD_BACKGROUND_COLOR = (0, 0, 0)
 BORDER_COLOR = (93, 216, 228)
 
 APPLE_COLOR = (255, 0, 0)
+BAD_APPLE_COLOR = (120, 0, 120)
 
 SNAKE_COLOR = (0, 255, 0)
 SNAKE_HEAD_COLOR = (255, 255, 0)
@@ -68,9 +69,12 @@ def singleton(cls: T) -> T:
 class GameController:
     """Contains links to global objects, such as snake and apple."""
 
-    def __init__(self, snake: 'Snake', apple: 'Apple') -> None:
+    def __init__(
+        self, snake: 'Snake', apple: 'Apple', bad_apple: 'BadApple'
+    ) -> None:
         self.snake = snake
         self.apple = apple
+        self.bad_apple = bad_apple
 
 
 def draw_cell(
@@ -170,6 +174,16 @@ class Apple(GameObject):
         draw_cell(surface, self.screen_position, self.body_color)
 
 
+class BadApple(Apple):
+    """Rotten apple, which isn't good for your health.
+    Eating it will cause snake to lose its length.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.body_color = BAD_APPLE_COLOR
+
+
 class Snake(GameObject):
     """The snake.
 
@@ -214,7 +228,11 @@ class Snake(GameObject):
         self.positions.insert(0, new_position)
 
         # If snake's not growing, remove last position
-        if len(self.positions) > self.length:
+        while len(self.positions) > self.length:
+            # If snake eats bad apple while it only has a head reset the game
+            if len(self.positions) == 1:
+                self.reset()
+                return
             self.positions.pop()
 
     def update_direction(self) -> None:
@@ -253,9 +271,10 @@ def main() -> None:
     """Game main loop."""
     snake = Snake()
     apple = Apple()
+    bad_apple = BadApple()
 
     # Initialize game controller
-    GameController(snake, apple)
+    GameController(snake, apple, bad_apple)
 
     while True:
         # Read and handle events
@@ -271,6 +290,13 @@ def main() -> None:
             snake.length += 1
             apple.randomize_position()
 
+        # TODO: Almost duplicate code. Maybe check collision inside apple!
+        # If snake eats bad apple, it loses 1 length
+        snake_ate_bad_apple = snake.get_head_position() == bad_apple.position
+        if snake_ate_bad_apple:
+            snake.length -= 1
+            bad_apple.randomize_position()
+
         # If snake collides with its body, reset its length to 1
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
         if snake_collide_self:
@@ -279,8 +305,9 @@ def main() -> None:
         snake.move()
 
         # Draw all game objects
-        apple.draw(screen)
         snake.draw(screen)
+        apple.draw(screen)
+        bad_apple.draw(screen)
 
         pygame.display.update()
         clock.tick(SPEED)
