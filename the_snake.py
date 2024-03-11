@@ -65,18 +65,6 @@ def singleton(cls: T) -> T:
     return inner
 
 
-@singleton
-class GameController:
-    """Contains links to global objects, such as snake and apple."""
-
-    def __init__(
-        self, snake: 'Snake', apple: 'Apple', bad_apple: 'BadApple'
-    ) -> None:
-        self.snake = snake
-        self.apple = apple
-        self.bad_apple = bad_apple
-
-
 def draw_cell(
     surface: pygame.Surface,
     position: tuple[int, int],
@@ -112,6 +100,18 @@ def handle_keys() -> None:
                 snake.next_direction = LEFT
             elif event.key == pygame.K_RIGHT and snake.direction != LEFT:
                 snake.next_direction = RIGHT
+
+
+@singleton
+class GameController:
+    """Contains links to global objects, such as snake and apple."""
+
+    def __init__(
+        self, snake: 'Snake', apple: 'Apple', bad_apple: 'BadApple'
+    ) -> None:
+        self.snake = snake
+        self.apple = apple
+        self.bad_apple = bad_apple
 
 
 class GameObject(abc.ABC):
