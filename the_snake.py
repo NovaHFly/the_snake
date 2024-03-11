@@ -43,6 +43,17 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 
+def draw_cell(
+    surface: pygame.Surface,
+    position: tuple[int, int],
+    color: tuple[int, int, int] = BOARD_BACKGROUND_COLOR,
+):
+    """Fills one rectangle cell on the grid."""
+    rect = pygame.Rect(position, CELL_SIZE)
+    pygame.draw.rect(surface, color, rect)
+    pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+
 def handle_keys(game_object):
     """Reads all events from game.
 
@@ -105,11 +116,9 @@ class Apple(GameObject):
                 continue
             break
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
         """Draws an apple on game screen."""
-        rect = pygame.Rect(self.screen_position, CELL_SIZE)
-        pygame.draw.rect(surface, self.body_color, rect)
-        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+        draw_cell(surface, self.screen_position, self.body_color)
 
 
 class Snake(GameObject):
@@ -180,18 +189,14 @@ class Snake(GameObject):
         self.length = 1
         self.direction = choice((UP, DOWN, LEFT, RIGHT))
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
         """Draw snake on the game screen."""
         positions = self.screen_positions
 
-        rect = pygame.Rect(positions[0], CELL_SIZE)
-        pygame.draw.rect(surface, self.head_color, rect)
-        pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+        draw_cell(surface, positions[0], self.head_color)
 
         for position in positions[1:]:
-            rect = pygame.Rect(position, CELL_SIZE)
-            pygame.draw.rect(surface, self.body_color, rect)
-            pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+            draw_cell(surface, position, self.body_color)
 
 
 def main():
