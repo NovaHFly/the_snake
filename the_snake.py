@@ -106,12 +106,18 @@ def handle_keys() -> None:
 class GameController:
     """Contains links to global objects, such as snake and apple."""
 
-    def __init__(
-        self, snake: 'Snake', apple: 'Apple', bad_apple: 'BadApple'
-    ) -> None:
-        self.snake = snake
-        self.apple = apple
-        self.bad_apple = bad_apple
+    def __init__(self) -> None:
+        self.snake = Snake()
+        self.apple = Apple()
+        self.bad_apple = BadApple()
+
+    @property
+    def occupied_positions(self) -> list[tuple[int, int]]:
+        """Get a list of all occupied positions inside the grid."""
+        return self.snake.positions + [
+            self.apple.position,
+            self.bad_apple.position,
+        ]
 
 
 class GameObject(abc.ABC):
@@ -140,22 +146,19 @@ class Apple(GameObject):
         super().__init__()
 
         self.body_color = APPLE_COLOR
+        self.position = None
 
         # Randomize apple's starting position
         self.randomize_position()
 
     def randomize_position(self) -> None:
         """Set apple position to a random cell inside the grid."""
-        # Snake positions are used as reference to where apple can't
-        #  be generated.
-
-        # Get snake segments current positions
-        try:
-            snake_positions = GameController().snake.positions
-        except TypeError:
-            # TypeError means controller was not initialized yet.
-            #  Use default snake positions, i.e. grid center
-            snake_positions = [GRID_CENTER]
+        # Occupied positions are positions where apple can't be generated.
+        # If position is set first time only grid_center is considered occupied
+        if self.position is None:
+            occupied_positions = [GRID_CENTER]
+        else:
+            occupied_positions = GameController().occupied_positions
 
         # Generate new random coordinates until free cell is found.
         while True:
@@ -165,8 +168,8 @@ class Apple(GameObject):
             )
 
             # If generated position does not collide
-            #  with snake positions, exit loop
-            if self.position not in snake_positions:
+            #  with any of occupied positions, exit loop
+            if self.position not in occupied_positions:
                 break
 
     def draw(self, surface: pygame.Surface) -> None:
@@ -269,12 +272,13 @@ class Snake(GameObject):
 
 def main() -> None:
     """Game main loop."""
-    snake = Snake()
-    apple = Apple()
-    bad_apple = BadApple()
-
     # Initialize game controller
-    GameController(snake, apple, bad_apple)
+    controller = GameController()
+
+    # Get all game object instances from controller
+    snake = controller.snake
+    apple = controller.apple
+    bad_apple = controller.bad_apple
 
     while True:
         # Read and handle events
