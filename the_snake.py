@@ -1,3 +1,4 @@
+import abc
 from random import choice, randint
 
 import pygame
@@ -74,13 +75,14 @@ def handle_keys(game_object):
                 game_object.next_direction = RIGHT
 
 
-class GameObject:
+class GameObject(abc.ABC):
     """Base game object."""
 
     def __init__(self):
         self.position = GRID_CENTER
         self.body_color = None
 
+    @abc.abstractmethod
     def draw(self, surface: pygame.Surface):
         """Draw game object on the game screen."""
         pass
