@@ -1,7 +1,11 @@
 import abc
+from functools import wraps
 from random import choice, randint
+from typing import TypeVar
 
 import pygame
+
+T = TypeVar('T')
 
 pygame.init()
 
@@ -44,6 +48,31 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 
+def singleton(cls: T) -> T:
+    """Singleton pattern decorator."""
+    instance = None
+
+    @wraps(cls)
+    def inner(*args, **kwargs) -> None:
+        nonlocal instance
+
+        if instance is None:
+            instance = cls(*args, **kwargs)
+
+        return instance
+
+    return inner
+
+
+@singleton
+class GameController:
+    """Contains links to global objects, such as snake and apple."""
+
+    def __init__(self, snake: 'Snake', apple: 'Apple') -> None:
+        self.snake = snake
+        self.apple = apple
+
+
 def draw_cell(
     surface: pygame.Surface,
     position: tuple[int, int],
@@ -55,25 +84,30 @@ def draw_cell(
     pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
 
-# TODO: handle_keys accepts snake as game_object, but that's logic flaw and coupling!
-def handle_keys(game_object: 'GameObject') -> None:
+def handle_keys() -> None:
     """Reads all events from game.
 
     Handles window close event and key press events.
     """
     for event in pygame.event.get():
+        # Handle quit event, e.g. window closing.
         if event.type == pygame.QUIT:
             pygame.quit()
             raise SystemExit
+
+        # Handle direction key presses. They control snake's move direction
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and game_object.direction != DOWN:
-                game_object.next_direction = UP
-            elif event.key == pygame.K_DOWN and game_object.direction != UP:
-                game_object.next_direction = DOWN
-            elif event.key == pygame.K_LEFT and game_object.direction != RIGHT:
-                game_object.next_direction = LEFT
-            elif event.key == pygame.K_RIGHT and game_object.direction != LEFT:
-                game_object.next_direction = RIGHT
+            # Get snake instance
+            snake = GameController().snake
+
+            if event.key == pygame.K_UP and snake.direction != DOWN:
+                snake.next_direction = UP
+            elif event.key == pygame.K_DOWN and snake.direction != UP:
+                snake.next_direction = DOWN
+            elif event.key == pygame.K_LEFT and snake.direction != RIGHT:
+                snake.next_direction = LEFT
+            elif event.key == pygame.K_RIGHT and snake.direction != LEFT:
+                snake.next_direction = RIGHT
 
 
 class GameObject(abc.ABC):
@@ -106,13 +140,17 @@ class Apple(GameObject):
         # Randomize apple's starting position
         self.randomize_position()
 
-    def randomize_position(
-        self, snake_positions: list[tuple[int, int]] = None
-    ) -> None:
+    def randomize_position(self) -> None:
         """Set apple position to a random cell inside the grid."""
         # Snake positions are used as reference to where apple can't
         #  be generated.
-        if snake_positions is None:
+
+        # Get snake segments current positions
+        try:
+            snake_positions = GameController().snake.positions
+        except TypeError:
+            # TypeError means controller was not initialized yet.
+            #  Use default snake positions, i.e. grid center
             snake_positions = [GRID_CENTER]
 
         # Generate new random coordinates until free cell is found.
@@ -122,12 +160,10 @@ class Apple(GameObject):
                 randint(0, GRID_HEIGHT - 1),
             )
 
-            # If generated position collides with snake positions
-            #  go to next iteration
-            if self.position in snake_positions:
-                continue
-
-            break
+            # If generated position does not collide
+            #  with snake positions, exit loop
+            if self.position not in snake_positions:
+                break
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws an apple on game screen."""
@@ -218,9 +254,12 @@ def main() -> None:
     snake = Snake()
     apple = Apple()
 
+    # Initialize game controller
+    GameController(snake, apple)
+
     while True:
         # Read and handle events
-        handle_keys(snake)
+        handle_keys()
         snake.update_direction()
 
         # Clear screen
@@ -230,7 +269,7 @@ def main() -> None:
         snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
             snake.length += 1
-            apple.randomize_position(snake.positions)
+            apple.randomize_position()
 
         # If snake collides with its body, reset its length to 1
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
