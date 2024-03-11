@@ -48,14 +48,15 @@ def draw_cell(
     surface: pygame.Surface,
     position: tuple[int, int],
     color: tuple[int, int, int] = BOARD_BACKGROUND_COLOR,
-):
+) -> None:
     """Fills one rectangle cell on the grid."""
     rect = pygame.Rect(position, CELL_SIZE)
     pygame.draw.rect(surface, color, rect)
     pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
 
-def handle_keys(game_object):
+# TODO: handle_keys accepts snake as game_object, but that's logic flaw and coupling!
+def handle_keys(game_object: 'GameObject') -> None:
     """Reads all events from game.
 
     Handles window close event and key press events.
@@ -78,12 +79,12 @@ def handle_keys(game_object):
 class GameObject(abc.ABC):
     """Base game object."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.position = GRID_CENTER
         self.body_color = None
 
     @abc.abstractmethod
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface) -> None:
         """Draw game object on the game screen."""
         pass
 
@@ -97,7 +98,7 @@ class GameObject(abc.ABC):
 class Apple(GameObject):
     """An apple. Used as food for the snake."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.body_color = APPLE_COLOR
@@ -107,7 +108,7 @@ class Apple(GameObject):
 
     def randomize_position(
         self, snake_positions: list[tuple[int, int]] = None
-    ):
+    ) -> None:
         """Set apple position to a random cell inside the grid."""
         # Snake positions are used as reference to where apple can't
         #  be generated.
@@ -128,7 +129,7 @@ class Apple(GameObject):
 
             break
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface) -> None:
         """Draws an apple on game screen."""
         draw_cell(surface, self.screen_position, self.body_color)
 
@@ -140,7 +141,7 @@ class Snake(GameObject):
     The snake can move in 4 direction as well as grow when eating.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.body_color = SNAKE_COLOR
@@ -157,7 +158,7 @@ class Snake(GameObject):
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
 
-    def move(self):
+    def move(self) -> None:
         """Moves the snake's head in current direction.
 
         Inserts new head position in positions list.
@@ -180,7 +181,7 @@ class Snake(GameObject):
         if len(self.positions) > self.length:
             self.positions.pop()
 
-    def update_direction(self):
+    def update_direction(self) -> None:
         """Updates snake direction with a new value."""
         if self.next_direction:
             self.direction = self.next_direction
@@ -196,13 +197,13 @@ class Snake(GameObject):
             )
         )
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets snake on collision with self."""
         self.positions = [GRID_CENTER]
         self.length = 1
         self.direction = choice((UP, DOWN, LEFT, RIGHT))
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface) -> None:
         """Draw snake on the game screen."""
         positions = self.screen_positions
 
@@ -212,7 +213,7 @@ class Snake(GameObject):
             draw_cell(surface, position, self.body_color)
 
 
-def main():
+def main() -> None:
     """Game main loop."""
     snake = Snake()
     apple = Apple()
