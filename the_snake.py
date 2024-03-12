@@ -1,11 +1,12 @@
 import abc
 from functools import wraps
 from random import choice, randint
-from typing import TypeVar
+from typing import TypeVar, Optional
 
 import pygame
 
 T = TypeVar('T')
+GridCoordinates = tuple[int, int]
 
 pygame.init()
 
@@ -75,6 +76,28 @@ def draw_cell(
     rect = pygame.Rect(position, CELL_SIZE)
     pygame.draw.rect(surface, color, rect)
     pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
+
+
+def generate_random_coordinates(
+    occupied_positions: Optional[list[GridCoordinates]] = None,
+) -> GridCoordinates:
+    """Generate random unoccupied coordinates in the grid."""
+    if occupied_positions is None:
+        occupied_positions = []
+
+    while True:
+        coordinates = (
+            randint(0, GRID_WIDTH - 1),
+            randint(0, GRID_HEIGHT - 1),
+        )
+
+        # If generated coordinates do not collide
+        #  with any of occupied coordinates, exit loop
+        if coordinates not in occupied_positions:
+            break
+
+    return coordinates
+
 
 # TODO: Separate this into several functions
 def handle_keys() -> None:
@@ -201,18 +224,8 @@ class EatableObject(GameObject, abc.ABC):
             # ! Might remove this conditional.
             occupied_positions = GameController().occupied_positions
 
-        # TODO: Put this in separate function, too much nesting
-        # Generate new random coordinates until free cell is found.
-        while True:
-            self.position = (
-                randint(0, GRID_WIDTH - 1),
-                randint(0, GRID_HEIGHT - 1),
-            )
-
-            # If generated position does not collide
-            #  with any of occupied positions, exit loop
-            if self.position not in occupied_positions:
-                break
+        # Get random available coordinates and set it to self position
+        self.position = generate_random_coordinates(occupied_positions)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws an object on game screen."""
