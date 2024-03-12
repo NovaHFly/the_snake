@@ -144,6 +144,7 @@ class GameController:
             snake.eat(self.bad_apple)
             return
 
+        # If snake eats a stone, it dies from indigestion. Game is reset.
         if snake.get_head_position() == self.stone.position:
             snake.eat(self.stone)
             return
