@@ -119,6 +119,12 @@ class GameController:
             self.bad_apple.position,
         ]
 
+    def reset(self) -> None:
+        """Resets the game."""
+        self.apple.randomize_position()
+        self.bad_apple.randomize_position()
+        self.snake.reset()
+
 
 class GameObject(abc.ABC):
     """Base game object."""
@@ -257,10 +263,6 @@ class Snake(GameObject):
 
         # If snake's not growing, remove last position
         while len(self.positions) > self.length:
-            # If snake eats bad apple while it only has a head reset the game
-            if len(self.positions) == 1:
-                self.reset()
-                return
             self.positions.pop()
 
     def update_direction(self) -> None:
@@ -324,10 +326,11 @@ def main() -> None:
         if snake_ate_bad_apple:
             snake.eat(bad_apple)
 
-        # If snake collides with its body, reset its length to 1
+        # If snake collides with its body, or
+        #  its length equals 0, reset the game
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
-        if snake_collide_self:
-            snake.reset()
+        if snake_collide_self or snake.length == 0:
+            GameController().reset()
 
         snake.move()
 
