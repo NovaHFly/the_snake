@@ -76,7 +76,7 @@ def draw_cell(
     pygame.draw.rect(surface, color, rect)
     pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
-
+# TODO: Separate this into several functions
 def handle_keys() -> None:
     """Reads all events from game.
 
@@ -103,6 +103,7 @@ def handle_keys() -> None:
                 snake.next_direction = RIGHT
 
 
+# FIXME: A big singleton problem, needs refactoring!
 @singleton
 class GameController:
     """Contains links to global objects, such as snake and apple."""
@@ -113,6 +114,7 @@ class GameController:
         self.bad_apple = BadApple()
         self.stone = Stone()
 
+    # Probably better as a separate function, but needs some way to get positions on the grid
     @property
     def occupied_positions(self) -> list[tuple[int, int]]:
         """Get a list of all occupied positions inside the grid."""
@@ -195,8 +197,11 @@ class EatableObject(GameObject, abc.ABC):
         if self.position is None:
             occupied_positions = [GRID_CENTER]
         else:
+            # TODO: Some way to access grid positions which are occupied
+            # ! Might remove this conditional.
             occupied_positions = GameController().occupied_positions
 
+        # TODO: Put this in separate function, too much nesting
         # Generate new random coordinates until free cell is found.
         while True:
             self.position = (
@@ -363,7 +368,7 @@ def main() -> None:
         # If snake length reaches 0, then it dies.
         #  The game must be reset.
         if snake.length == 0:
-            GameController().reset()
+            controller.reset()
 
         snake.move()
 
