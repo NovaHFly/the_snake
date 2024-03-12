@@ -125,6 +125,27 @@ class GameController:
         self.bad_apple.randomize_position()
         self.snake.reset()
 
+    def check_snake_collision(self) -> None:
+        """Checks if snake collides with anything and if it does,
+        handles this event.
+        """
+        snake = self.snake
+
+        # If snake eats apple, increase its length by 1
+        if snake.get_head_position() == self.apple.position:
+            snake.eat(self.apple)
+            return
+
+        # If snake eats bad apple, decrease its length by 1.
+        if snake.get_head_position() == self.bad_apple.position:
+            snake.eat(self.bad_apple)
+            return
+
+        # If snake eats its own body, it dies. Game is reset.
+        if snake.get_head_position() in snake.positions[1:]:
+            self.reset()
+            return
+
 
 class GameObject(abc.ABC):
     """Base game object."""
@@ -239,7 +260,7 @@ class Snake(GameObject):
         return self.positions[0]
 
     def eat(self, eatable_object: EatableObject) -> None:
-        """Eats an apple."""
+        """Eats something."""
         eatable_object.apply_effect(self)
 
     def move(self) -> None:
@@ -315,21 +336,13 @@ def main() -> None:
         # Clear screen
         screen.fill(BOARD_BACKGROUND_COLOR)
 
-        # If snake eats an apple, allow it to grow by one
-        snake_ate_apple = snake.get_head_position() == apple.position
-        if snake_ate_apple:
-            snake.eat(apple)
+        # Check if snake collides with anything.
+        #  If it does, handle this event.
+        controller.check_snake_collision()
 
-        # TODO: Almost duplicate code. Maybe check collision inside apple!
-        # If snake eats bad apple, it loses 1 length
-        snake_ate_bad_apple = snake.get_head_position() == bad_apple.position
-        if snake_ate_bad_apple:
-            snake.eat(bad_apple)
-
-        # If snake collides with its body, or
-        #  its length equals 0, reset the game
-        snake_collide_self = snake.get_head_position() in snake.positions[1:]
-        if snake_collide_self or snake.length == 0:
+        # If snake length reaches 0, then it dies.
+        #  The game must be reset.
+        if snake.length == 0:
             GameController().reset()
 
         snake.move()
