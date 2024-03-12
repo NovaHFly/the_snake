@@ -155,14 +155,13 @@ class GameController:
             return
 
 
-class GameObject(abc.ABC):
+class GameObject:
     """Base game object."""
 
     def __init__(self) -> None:
         self.position = GRID_CENTER
         self.body_color = None
 
-    @abc.abstractmethod
     def draw(self, surface: pygame.Surface) -> None:
         """Draw game object on the game screen."""
         pass
