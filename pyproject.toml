@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+extend-select = ["D", "A", "B0", "E", "I", "N", "Q", "W", "UP", "ERA", "ANN", "FIX"]
+ignore = ["D100", "D107", "D203", "D205", "D213", "D400", "D401", "N806", "N818", "ANN002", "ANN003"]
+preview = true
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.format]
+quote-style = "single"
