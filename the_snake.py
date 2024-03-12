@@ -79,11 +79,11 @@ def draw_cell(
 
 
 def generate_random_coordinates(
-    occupied_positions: Optional[list[GridCoordinates]] = None,
+    occupied_coordinates: Optional[list[GridCoordinates]] = None,
 ) -> GridCoordinates:
     """Generate random unoccupied coordinates in the grid."""
-    if occupied_positions is None:
-        occupied_positions = []
+    if occupied_coordinates is None:
+        occupied_coordinates = []
 
     while True:
         coordinates = (
@@ -93,7 +93,7 @@ def generate_random_coordinates(
 
         # If generated coordinates do not collide
         #  with any of occupied coordinates, exit loop
-        if coordinates not in occupied_positions:
+        if coordinates not in occupied_coordinates:
             break
 
     return coordinates
@@ -139,11 +139,12 @@ class GameController:
 
     # Probably better as a separate function, but needs some way to get positions on the grid
     @property
-    def occupied_positions(self) -> list[tuple[int, int]]:
+    def occupied_coordinates(self) -> list[GridCoordinates]:
         """Get a list of all occupied positions inside the grid."""
         return self.snake.positions + [
             self.apple.position,
             self.bad_apple.position,
+            self.stone.position,
         ]
 
     def reset(self) -> None:
@@ -159,19 +160,20 @@ class GameController:
         """
         snake = self.snake
 
+        # FIXME: A lot of duplicate code, probably there's a way to refactor.
         # If snake eats apple, increase its length by 1
         if snake.get_head_position() == self.apple.position:
-            snake.eat(self.apple)
+            snake.eat(self.apple, self.occupied_coordinates)
             return
 
         # If snake eats bad apple, decrease its length by 1.
         if snake.get_head_position() == self.bad_apple.position:
-            snake.eat(self.bad_apple)
+            snake.eat(self.bad_apple, self.occupied_coordinates)
             return
 
         # If snake eats a stone, it dies from indigestion. Game is reset.
         if snake.get_head_position() == self.stone.position:
-            snake.eat(self.stone)
+            snake.eat(self.stone, self.occupied_coordinates)
             return
 
         # If snake eats its own body, it dies. Game is reset.
@@ -205,6 +207,7 @@ class EatableObject(GameObject, abc.ABC):
         super().__init__()
 
         self.position = None
+
         # Randomize object's starting position
         self.randomize_position()
 
@@ -213,19 +216,16 @@ class EatableObject(GameObject, abc.ABC):
         """Apply some effect to the snake."""
         pass
 
-    def randomize_position(self) -> None:
+    def randomize_position(
+        self, occupied_coordinates: Optional[list[GridCoordinates]] = None
+    ) -> None:
         """Set object position to a random cell inside the grid."""
-        # Occupied positions are positions where object can't be spawned.
-        # If position is set first time only grid_center is considered occupied
-        if self.position is None:
-            occupied_positions = [GRID_CENTER]
-        else:
-            # TODO: Some way to access grid positions which are occupied
-            # ! Might remove this conditional.
-            occupied_positions = GameController().occupied_positions
+        # Object can not be spawned in occupied coordinates.
+        if occupied_coordinates is None:
+            occupied_coordinates = []  # Probably better to block some coordinates in this case
 
         # Get random available coordinates and set it to self position
-        self.position = generate_random_coordinates(occupied_positions)
+        self.position = generate_random_coordinates(occupied_coordinates)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws an object on game screen."""
@@ -242,7 +242,6 @@ class Apple(EatableObject):
     def apply_effect(self, snake: 'Snake') -> None:
         """Increase snake's length by 1."""
         snake.length += 1
-        self.randomize_position()
 
 
 class BadApple(EatableObject):
@@ -257,7 +256,6 @@ class BadApple(EatableObject):
     def apply_effect(self, snake: 'Snake') -> None:
         """Decrease snake's length by 1."""
         snake.length -= 1
-        self.randomize_position()
 
 
 class Stone(EatableObject):
@@ -296,9 +294,14 @@ class Snake(GameObject):
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
 
-    def eat(self, eatable_object: EatableObject) -> None:
+    def eat(
+        self,
+        eatable_object: EatableObject,
+        occupied_coordinates: Optional[list[GridCoordinates]],
+    ) -> None:
         """Eats something."""
         eatable_object.apply_effect(self)
+        eatable_object.randomize_position(occupied_coordinates)
 
     def move(self) -> None:
         """Moves the snake's head in current direction.
