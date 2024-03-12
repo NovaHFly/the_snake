@@ -26,6 +26,13 @@ DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
+DIRECTIONAL_KEYS = (
+    pygame.K_UP,
+    pygame.K_DOWN,
+    pygame.K_LEFT,
+    pygame.K_RIGHT,
+)
+
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 
 # Cell border color
@@ -99,43 +106,29 @@ def generate_random_coordinates(
     return coordinates
 
 
-# TODO: Separate this into several functions
-def handle_keys() -> None:
-    """Reads all events from game.
-
-    Handles window close event and key press events.
-    """
-    for event in pygame.event.get():
-        # Handle quit event, e.g. window closing.
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            raise SystemExit
-
-        # Handle direction key presses. They control snake's move direction
-        elif event.type == pygame.KEYDOWN:
-            # Get snake instance
-            snake = GameController().snake
-
-            if event.key == pygame.K_UP and snake.direction != DOWN:
-                snake.next_direction = UP
-            elif event.key == pygame.K_DOWN and snake.direction != UP:
-                snake.next_direction = DOWN
-            elif event.key == pygame.K_LEFT and snake.direction != RIGHT:
-                snake.next_direction = LEFT
-            elif event.key == pygame.K_RIGHT and snake.direction != LEFT:
-                snake.next_direction = RIGHT
-
-
 # FIXME: A big singleton problem, needs refactoring!
 @singleton
 class GameController:
-    """Contains links to global objects, such as snake and apple."""
+    """Contains links to global objects, such as snake and apple.
+    Also provides convenient methods to manipulate game flow.
+    """
 
     def __init__(self) -> None:
         self.snake = Snake()
         self.apple = Apple()
         self.bad_apple = BadApple()
         self.stone = Stone()
+
+    def handle_events(self) -> None:
+        """Reads and handles all events from pygame."""
+        for event in pygame.event.get():
+            # Handle quit event, e.g. window closing.
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                raise SystemExit
+
+            if event.type == pygame.KEYDOWN and event.key in DIRECTIONAL_KEYS:
+                self.snake.handle_key_press(event.key)
 
     # Probably better as a separate function, but needs some way to get positions on the grid
     @property
@@ -149,10 +142,10 @@ class GameController:
 
     def reset(self) -> None:
         """Resets the game."""
-        self.apple.randomize_position()
-        self.bad_apple.randomize_position()
-        self.stone.randomize_position()
         self.snake.reset()
+        self.apple.randomize_position(self.occupied_coordinates)
+        self.bad_apple.randomize_position(self.occupied_coordinates)
+        self.stone.randomize_position(self.occupied_coordinates)
 
     def check_snake_collision(self) -> None:
         """Checks if snake collides with anything and if it does,
@@ -326,6 +319,21 @@ class Snake(GameObject):
         while len(self.positions) > self.length:
             self.positions.pop()
 
+    def handle_key_press(self, key_id: int) -> None:
+        """Chooses snake's next direction based on pressed
+        directional key.
+        """
+        if key_id == pygame.K_UP and self.direction != DOWN:
+            self.next_direction = UP
+        elif key_id == pygame.K_DOWN and self.direction != UP:
+            self.next_direction = DOWN
+        elif key_id == pygame.K_LEFT and self.direction != RIGHT:
+            self.next_direction = LEFT
+        elif key_id == pygame.K_RIGHT and self.direction != LEFT:
+            self.next_direction = RIGHT
+
+        self.update_direction()
+
     def update_direction(self) -> None:
         """Updates snake direction with a new value."""
         if self.next_direction:
@@ -371,8 +379,7 @@ def main() -> None:
 
     while True:
         # Read and handle events
-        handle_keys()
-        snake.update_direction()
+        controller.handle_events()
 
         # Clear screen
         screen.fill(BOARD_BACKGROUND_COLOR)
