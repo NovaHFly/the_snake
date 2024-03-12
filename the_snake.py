@@ -58,22 +58,6 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 
-def singleton(cls: T) -> T:
-    """Singleton pattern decorator."""
-    instance = None
-
-    @wraps(cls)
-    def inner(*args, **kwargs) -> None:
-        nonlocal instance
-
-        if instance is None:
-            instance = cls(*args, **kwargs)
-
-        return instance
-
-    return inner
-
-
 def draw_cell(
     surface: pygame.Surface,
     position: GridCoordinates,
@@ -106,8 +90,6 @@ def generate_random_coordinates(
     return coordinates
 
 
-# FIXME: A big singleton problem, needs refactoring!
-@singleton
 class GameController:
     """Contains links to global objects, such as snake and apple.
     Also provides convenient methods to manipulate game flow.
