@@ -32,6 +32,7 @@ BORDER_COLOR = (93, 216, 228)
 
 APPLE_COLOR = (255, 0, 0)
 BAD_APPLE_COLOR = (120, 0, 120)
+STONE_COLOR = (160, 160, 160)
 
 SNAKE_COLOR = (0, 255, 0)
 SNAKE_HEAD_COLOR = (255, 255, 0)
@@ -110,6 +111,7 @@ class GameController:
         self.snake = Snake()
         self.apple = Apple()
         self.bad_apple = BadApple()
+        self.stone = Stone()
 
     @property
     def occupied_positions(self) -> list[tuple[int, int]]:
@@ -123,6 +125,7 @@ class GameController:
         """Resets the game."""
         self.apple.randomize_position()
         self.bad_apple.randomize_position()
+        self.stone.randomize_position()
         self.snake.reset()
 
     def check_snake_collision(self) -> None:
@@ -139,6 +142,10 @@ class GameController:
         # If snake eats bad apple, decrease its length by 1.
         if snake.get_head_position() == self.bad_apple.position:
             snake.eat(self.bad_apple)
+            return
+
+        if snake.get_head_position() == self.stone.position:
+            snake.eat(self.stone)
             return
 
         # If snake eats its own body, it dies. Game is reset.
@@ -235,6 +242,18 @@ class BadApple(EatableObject):
         self.randomize_position()
 
 
+class Stone(EatableObject):
+    """Some stone, lying in the field. Snake can't digest it."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.body_color = STONE_COLOR
+
+    def apply_effect(self, snake: 'Snake') -> None:
+        """Snake can't digest stones. Its length is set to 0."""
+        snake.length = 0
+
+
 class Snake(GameObject):
     """The Snake.
 
@@ -327,6 +346,7 @@ def main() -> None:
     snake = controller.snake
     apple = controller.apple
     bad_apple = controller.bad_apple
+    stone = controller.stone
 
     while True:
         # Read and handle events
@@ -350,6 +370,8 @@ def main() -> None:
         # Draw all game objects
         apple.draw(screen)
         bad_apple.draw(screen)
+        stone.draw(screen)
+
         snake.draw(screen)
 
         pygame.display.update()
