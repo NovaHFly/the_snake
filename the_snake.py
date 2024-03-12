@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from random import choice, randint
-from typing import TypeVar, Optional
+from typing import Optional, TypeVar
 
 import pygame
 
@@ -76,7 +76,7 @@ def singleton(cls: T) -> T:
 
 def draw_cell(
     surface: pygame.Surface,
-    position: tuple[int, int],
+    position: GridCoordinates,
     color: tuple[int, int, int] = BOARD_BACKGROUND_COLOR,
 ) -> None:
     """Fills one rectangle cell on the grid."""
@@ -187,7 +187,7 @@ class GameObject:
         pass
 
     @property
-    def screen_position(self) -> tuple[int, int]:
+    def screen_position(self) -> GridCoordinates:
         """Object's true position on screen."""
         col, row = self.position
         return (col * GRID_SIZE, row * GRID_SIZE)
@@ -283,7 +283,7 @@ class Snake(GameObject):
         # Snake starts at the grid center
         self.positions = [GRID_CENTER]
 
-    def get_head_position(self) -> tuple[int, int]:
+    def get_head_position(self) -> GridCoordinates:
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
 
@@ -341,7 +341,7 @@ class Snake(GameObject):
             self.next_direction = None
 
     @property
-    def screen_positions(self) -> list[tuple[int, int]]:
+    def screen_positions(self) -> list[GridCoordinates]:
         """Snake segments true position on screen."""
         return list(
             map(
