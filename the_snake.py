@@ -139,21 +139,24 @@ class GameObject(abc.ABC):
         return (col * GRID_SIZE, row * GRID_SIZE)
 
 
-class Apple(GameObject):
-    """An apple. Used as food for the snake."""
+class EatableObject(GameObject, abc.ABC):
+    """An object that the Snake can eat."""
 
     def __init__(self) -> None:
         super().__init__()
 
-        self.body_color = APPLE_COLOR
         self.position = None
-
-        # Randomize apple's starting position
+        # Randomize object's starting position
         self.randomize_position()
 
+    @abc.abstractmethod
+    def apply_effect(self, snake: 'Snake') -> None:
+        """Apply some effect to the snake."""
+        pass
+
     def randomize_position(self) -> None:
-        """Set apple position to a random cell inside the grid."""
-        # Occupied positions are positions where apple can't be generated.
+        """Set object position to a random cell inside the grid."""
+        # Occupied positions are positions where object can't be spawned.
         # If position is set first time only grid_center is considered occupied
         if self.position is None:
             occupied_positions = [GRID_CENTER]
@@ -173,11 +176,24 @@ class Apple(GameObject):
                 break
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draws an apple on game screen."""
+        """Draws an object on game screen."""
         draw_cell(surface, self.screen_position, self.body_color)
 
 
-class BadApple(Apple):
+class Apple(EatableObject):
+    """An apple. Used as food for the snake."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.body_color = APPLE_COLOR
+
+    def apply_effect(self, snake: 'Snake') -> None:
+        """Increase snake's length by 1."""
+        snake.length += 1
+        self.randomize_position()
+
+
+class BadApple(EatableObject):
     """Rotten apple, which isn't good for your health.
     Eating it will cause snake to lose its length.
     """
@@ -186,9 +202,14 @@ class BadApple(Apple):
         super().__init__()
         self.body_color = BAD_APPLE_COLOR
 
+    def apply_effect(self, snake: 'Snake') -> None:
+        """Decrease snake's length by 1."""
+        snake.length -= 1
+        self.randomize_position()
+
 
 class Snake(GameObject):
-    """The snake.
+    """The Snake.
 
     The snake is here to eat apples.
     The snake can move in 4 direction as well as grow when eating.
@@ -210,6 +231,10 @@ class Snake(GameObject):
     def get_head_position(self) -> tuple[int, int]:
         """Snake's head position (First square in snake positions)."""
         return self.positions[0]
+
+    def eat(self, eatable_object: EatableObject) -> None:
+        """Eats an apple."""
+        eatable_object.apply_effect(self)
 
     def move(self) -> None:
         """Moves the snake's head in current direction.
@@ -291,15 +316,13 @@ def main() -> None:
         # If snake eats an apple, allow it to grow by one
         snake_ate_apple = snake.get_head_position() == apple.position
         if snake_ate_apple:
-            snake.length += 1
-            apple.randomize_position()
+            snake.eat(apple)
 
         # TODO: Almost duplicate code. Maybe check collision inside apple!
         # If snake eats bad apple, it loses 1 length
         snake_ate_bad_apple = snake.get_head_position() == bad_apple.position
         if snake_ate_bad_apple:
-            snake.length -= 1
-            bad_apple.randomize_position()
+            snake.eat(bad_apple)
 
         # If snake collides with its body, reset its length to 1
         snake_collide_self = snake.get_head_position() in snake.positions[1:]
@@ -309,9 +332,9 @@ def main() -> None:
         snake.move()
 
         # Draw all game objects
-        snake.draw(screen)
         apple.draw(screen)
         bad_apple.draw(screen)
+        snake.draw(screen)
 
         pygame.display.update()
         clock.tick(SPEED)
